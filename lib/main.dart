@@ -4,12 +4,6 @@ void main() {
   runApp(const TaskFlowApp());
 }
 
-/// Función con Null Safety que genera el saludo personalizado
-String obtenerSaludo(String nombre, String? rolOpcional) {
-  final String rol = rolOpcional ?? 'Estudiante de Ingeniería TI';
-  return '¡Bienvenido, $nombre! ($rol)';
-}
-
 class TaskFlowApp extends StatelessWidget {
   const TaskFlowApp({super.key});
 
@@ -18,11 +12,10 @@ class TaskFlowApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'TaskFlow',
-      // Paleta de color propia usando Material 3
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F766E), // Verde esmeralda oscuro / Teal
+          seedColor: const Color(0xFF0F766E),
           brightness: Brightness.dark,
         ),
       ),
@@ -31,131 +24,90 @@ class TaskFlowApp extends StatelessWidget {
   }
 }
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
   @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final String studentName = 'David Israel Chávez García';
+  int pendingTasks = 3;
+  static const dailyGoal = 5;
+  int completedTasks = 0;
+
+  void _completeTask() {
+    if (pendingTasks == 0) {
+      return;
+    }
+
+    setState(() {
+      pendingTasks--;
+      if (completedTasks < dailyGoal) {
+        completedTasks++;
+      }
+    });
+  }
+
+  void _addTask() {
+    setState(() {
+      pendingTasks++;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Dart básico: tipos, cadenas, booleanos, listas y mapas
-    const String appName = 'TaskFlow';
-    const String studentName = 'David Israel Chávez García';
-    const String welcomeMessage =
-        'Organiza tus actividades diarias, controla tu progreso y sincroniza tus pendientes en un solo lugar.';
-    const int staticTaskCounter = 5;
-    const bool isEnvironmentReady = true;
-
-    final List<String> previewCategories = ['Universidad', 'Proyecto API', 'Entrenamiento'];
-    final Map<String, dynamic> sessionMetadata = {
-      'semana': 1,
-      'sesion': 1,
-      'arquitecturaObjetivo': 'MVVM + Repository',
-    };
-
-    final colorScheme = Theme.of(context).colorScheme;
+    final statusMessage = pendingTasks == 0
+        ? '¡Excelente! No tienes tareas pendientes.'
+        : 'Aún tienes tareas por organizar.';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          appName,
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
-        ),
-        centerTitle: true,
-        backgroundColor: colorScheme.surfaceContainerHighest,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Encabezado y bienvenida
-              Icon(
-                Icons.task_alt_rounded,
-                size: 64,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                appName,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                obtenerSaludo(studentName, null),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                welcomeMessage,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 28),
-
-              // Tarjeta del contador estático de tareas
-              Card(
-                elevation: 0,
-                color: colorScheme.primaryContainer,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                  child: Column(
-                    children: [
-                      Text(
-                        'TAREAS PENDIENTES',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$staticTaskCounter',
-                        style: TextStyle(
-                          fontSize: 44,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Semana ${sessionMetadata['semana']} · Sesión ${sessionMetadata['sesion']} (${isEnvironmentReady ? "Entorno Activo" : "Pendiente"})',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
+      appBar: AppBar(title: const Text('TaskFlow'), centerTitle: true),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¡Hola, $studentName!',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(statusMessage),
+            const SizedBox(height: 8),
+            Text('Completadas hoy: $completedTasks de $dailyGoal'),
+            const SizedBox(height: 28),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.pending_actions),
+                    const SizedBox(width: 12),
+                    Text('Tareas pendientes: $pendingTasks'),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // Chips de categorías (uso de List en Dart)
-              Wrap(
-                spacing: 8,
-                alignment: WrapAlignment.center,
-                children: previewCategories
-                    .map((cat) => Chip(
-                          label: Text(cat),
-                          backgroundColor: colorScheme.surfaceContainerHigh,
-                        ))
-                    .toList(),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _addTask,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Agregar tarea'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: pendingTasks == 0 ? null : _completeTask,
+                  icon: const Icon(Icons.done),
+                  label: const Text('Completar una tarea'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
