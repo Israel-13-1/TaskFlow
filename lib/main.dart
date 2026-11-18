@@ -1,63 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'task.dart';
+
 void main() {
   runApp(const TaskFlowApp());
 }
 
-class Task {
-  const Task({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.priority,
-    required this.isCompleted,
-  });
-
-  final int id;
-  final String title;
-  final String description;
-  final String priority;
-  final bool isCompleted;
-}
-
-const demoTasks = [
+const demoTasks = <Task>[
   Task(
     id: 1,
-    title: 'Definir modelo de datos Task',
-    description: 'Estructurar propiedades id, título, descripción, prioridad y estado para representar cada actividad en TaskFlow.',
+    title: 'Modelar entidad Task con JSON',
+    description: 'Separar la clase Task en lib/task.dart e implementar factory Task.fromJson',
     priority: 'Alta',
     isCompleted: true,
+    userId: 1,
   ),
   Task(
     id: 2,
-    title: 'Construir widget reutilizable TaskCard',
-    description: 'Diseñar tarjeta con ListTile, estado visual e ícono de navegación hacia la vista de detalle.',
+    title: 'Documentar historias de usuario',
+    description: 'Redactar las cinco historias con criterios comprobables en el archivo README.md',
     priority: 'Alta',
-    isCompleted: true,
+    isCompleted: false,
+    userId: 1,
   ),
   Task(
     id: 3,
-    title: 'Implementar listado con ListView.builder',
-    description: 'Renderizar las tareas locales bajo demanda en TaskListScreen optimizando el desplazamiento.',
+    title: 'Definir contrato de endpoints REST',
+    description: 'Especificar las rutas GET, POST, PATCH y DELETE para la futura integración con API',
     priority: 'Media',
-    isCompleted: false,
+    isCompleted: true,
+    userId: 1,
   ),
   Task(
     id: 4,
-    title: 'Configurar rutas declarativas con GoRouter',
-    description: 'Enviar el parámetro :id desde el listado y recuperar la tarea seleccionada en TaskDetailScreen.',
+    title: 'Validar búsqueda segura por id',
+    description: 'Usar findTask y int.tryParse para mostrar un mensaje si el id de la tarea no existe',
     priority: 'Alta',
     isCompleted: false,
+    userId: 1,
   ),
   Task(
     id: 5,
-    title: 'Verificar calidad con flutter analyze',
-    description: 'Aplicar dart format, comprobar que no existan diagnósticos pendientes y registrar el commit en GitHub.',
+    title: 'Ejecutar análisis estático del código',
+    description: 'Correr dart format lib y flutter analyze sin errores antes de subir el commit',
     priority: 'Baja',
     isCompleted: false,
+    userId: 1,
   ),
 ];
+
+Task? findTask(int? id) {
+  for (final task in demoTasks) {
+    if (task.id == id) return task;
+  }
+  return null;
+}
 
 final appRouter = GoRouter(
   routes: [
@@ -65,8 +63,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/task/:id',
       builder: (context, state) {
-        final taskId = int.parse(state.pathParameters['id']!);
-        return TaskDetailScreen(taskId: taskId);
+        final id = int.tryParse(state.pathParameters['id'] ?? '');
+        return TaskDetailScreen(task: findTask(id));
       },
     ),
   ],
@@ -81,36 +79,9 @@ class TaskFlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'TaskFlow',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F766E),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
       ),
       routerConfig: appRouter,
-    );
-  }
-}
-
-class TaskCard extends StatelessWidget {
-  const TaskCard({super.key, required this.task, this.onTap});
-
-  final Task task;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: task.isCompleted ? Colors.green : null,
-        ),
-        title: Text(task.title),
-        subtitle: Text('${task.priority} - ${task.description}'),
-        trailing: const Icon(Icons.chevron_right),
-      ),
     );
   }
 }
@@ -127,9 +98,18 @@ class TaskListScreen extends StatelessWidget {
         itemCount: demoTasks.length,
         itemBuilder: (context, index) {
           final task = demoTasks[index];
-          return TaskCard(
-            task: task,
-            onTap: () => context.push('/task/${task.id}'),
+          return Card(
+            child: ListTile(
+              leading: Icon(
+                task.isCompleted
+                    ? Icons.check_circle
+                    : Icons.radio_button_unchecked,
+              ),
+              title: Text(task.title),
+              subtitle: Text('Prioridad: ${task.priority}'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/task/${task.id}'),
+            ),
           );
         },
       ),
@@ -138,84 +118,38 @@ class TaskListScreen extends StatelessWidget {
 }
 
 class TaskDetailScreen extends StatelessWidget {
-  const TaskDetailScreen({super.key, required this.taskId});
+  const TaskDetailScreen({super.key, required this.task});
 
-  final int taskId;
+  final Task? task;
 
   @override
   Widget build(BuildContext context) {
-    final task = demoTasks.firstWhere((item) => item.id == taskId);
-
+    final selected = task;
     return Scaffold(
-      appBar: AppBar(title: Text('Detalle de tarea #${task.id}')),
+      appBar: AppBar(title: const Text('Detalle de tarea')),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(task.title, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 16),
-            Text(task.description),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              children: [
-                Chip(
-                  avatar: const Icon(Icons.flag_outlined, size: 18),
-                  label: Text('Prioridad: ${task.priority}'),
-                ),
-                Chip(
-                  avatar: Icon(
-                    task.isCompleted ? Icons.check_circle : Icons.pending,
-                    size: 18,
-                    color: task.isCompleted ? Colors.green : null,
+        child: selected == null
+            ? const Text('No se encontró esta tarea.')
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selected.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  label: Text(
-                    task.isCompleted
+                  const SizedBox(height: 16),
+                  Text(selected.description),
+                  const SizedBox(height: 16),
+                  Text('Prioridad: ${selected.priority}'),
+                  Text(
+                    selected.isCompleted
                         ? 'Estado: completada'
                         : 'Estado: pendiente',
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Acción visual contextual exigida en el trabajo autónomo
-            Card(
-              child: ListTile(
-                leading: Icon(
-                  task.isCompleted ? Icons.verified : Icons.play_circle_outline,
-                  color: task.isCompleted ? Colors.green : null,
-                ),
-                title: Text(
-                  task.isCompleted
-                      ? 'Esta tarea ya fue finalizada'
-                      : 'Acción sugerida: iniciar seguimiento',
-                ),
-                subtitle: Text('Ruta activa: /task/${task.id}'),
-                trailing: OutlinedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          task.isCompleted
-                              ? 'Tarea #${task.id} verificada en el backlog.'
-                              : 'Tarea #${task.id} marcada en foco de trabajo.',
-                        ),
-                      ),
-                    );
-                  },
-                  child: Text(task.isCompleted ? 'Verificar' : 'Enfocar'),
-                ),
+                  Text('Usuario: ${selected.userId}'),
+                ],
               ),
-            ),
-            const Spacer(),
-            FilledButton.tonalIcon(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Volver al listado'),
-            ),
-          ],
-        ),
       ),
     );
   }
